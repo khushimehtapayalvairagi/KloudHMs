@@ -98,12 +98,13 @@ return res.status(201).json({
       throw new Error('contactNumber and designation are required for Staff.');
     }
 
-    let departmentId = null;
-    if (department) {
-      const departmentData = await Department.findOne({ name: department.trim() });
-      if (!departmentData) throw new Error(`Department '${department}' not found.`);
-      departmentId = departmentData._id;
-    }
+  let departmentId = null;
+if (department) {
+  const departmentData = await Department.findById(department);
+  if (!departmentData) throw new Error(`Department not found.`);
+  departmentId = departmentData._id;
+}
+
 
     const staff = await Staff.create({
       userId: newUser._id,
