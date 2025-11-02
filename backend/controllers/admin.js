@@ -567,19 +567,19 @@ const getAllDoctorsHandler = async (req, res) => {
     }
 };
 
-const getDoctorByIdHandler = async (req, res) => {
-    try {
-        const { id } = req.params;
+// const getDoctorByIdHandler = async (req, res) => {
+//     try {
+//         const { id } = req.params;
 
-        const doctor = await Doctor.findById(id).populate('userId', 'name email role').populate('specialty', 'name');
-        if (!doctor) return res.status(404).json({ message: 'Doctor not found.' });
+//         const doctor = await Doctor.findById(id).populate('userId', 'name email role').populate('specialty', 'name');
+//         if (!doctor) return res.status(404).json({ message: 'Doctor not found.' });
 
-        res.status(200).json({ doctor });
-    } catch (error) {
-        console.error('Fetch Doctor By ID Error:', error);
-        res.status(500).json({ message: 'Server error.' });
-    }
-};
+//         res.status(200).json({ doctor });
+//     } catch (error) {
+//         console.error('Fetch Doctor By ID Error:', error);
+//         res.status(500).json({ message: 'Server error.' });
+//     }
+// };
 
 const createReferralPartnerHandler = async (req, res) => {
     try {
@@ -706,6 +706,6 @@ module.exports = {registerHandler,getAllUsersHandler,createDepartmentHandler,get
     ,createSpecialtyHandler,getAllSpecialtiesHandler,createRoomCategoryHandler,getAllRoomCategoriesHandler,createWardHandler
     ,getAllWardsHandler,createLabourRoomHandler,getAllLabourRoomsHandler,createProcedureHandler,getAllProceduresHandler
     ,createManualChargeItemHandler,getAllManualChargeItemsHandler,getAllStaffHandler,getStaffByIdHandler
-    ,getAllDoctorsHandler,getDoctorByIdHandler,createReferralPartnerHandler,getAllReferralPartnersHandler,createOperationTheaterHandler
+    ,getAllDoctorsHandler,createReferralPartnerHandler,getAllReferralPartnersHandler,createOperationTheaterHandler
     ,getAllOperationTheatersHandler,deleteUserHandler
 };
