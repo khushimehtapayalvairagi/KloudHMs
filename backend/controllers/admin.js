@@ -115,10 +115,9 @@ const registerHandler = async (req, res) => {
       }
 
       let departmentId = null;
-    if (department) {
+ if (department) {
   console.log("📘 Raw department value:", department);
 
-  // Ensure you extract the ID correctly
   const departmentIdValue =
     typeof department === "object" ? department._id : department?.trim();
 
@@ -129,8 +128,10 @@ const registerHandler = async (req, res) => {
 
   if (!departmentData)
     throw new Error(`Department '${departmentIdValue}' not found.`);
+
   departmentId = departmentData._id;
 }
+
 
 
       const staff = await Staff.create({
