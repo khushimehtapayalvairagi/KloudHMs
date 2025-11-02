@@ -102,6 +102,9 @@ return res.status(201).json({
   let departmentId = null;
 if (department) {
   const depId = typeof department === 'object' && department._id ? department._id : department;
+   console.log("DEBUG — Current DB:", Department.db.name);
+  console.log("DEBUG — All Departments:", await Department.find({}, { name: 1 }));
+  console.log("DEBUG — Looking for Department (input):", depId);
   const departmentData = await Department.findById(depId);
   if (!departmentData) throw new Error(`Department '${depId}' not found.`);
   departmentId = departmentData._id;
