@@ -108,11 +108,14 @@ const registerHandler = async (req, res) => {
       }
 
       let departmentId = null;
-    if (department) {
+ if (department) {
+  console.log("📘 Department ID received from frontend:", department);
   const departmentData = await Department.findById(department);
+  console.log("📗 Department data found in DB:", departmentData);
   if (!departmentData) throw new Error(`Department '${department}' not found.`);
   departmentId = departmentData._id;
 }
+
 
 
       const staff = await Staff.create({
