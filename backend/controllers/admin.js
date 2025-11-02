@@ -57,6 +57,7 @@ const registerHandler = async (req, res) => {
         name: new RegExp(`^${specialty.trim()}$`, 'i'),
       });
       if (!specialtyData) throw new Error(`Specialty '${specialty}' not found.`);
+          console.log("Received department value:", department);
 
       const departmentData = await Department.findById(department);
       if (!departmentData) throw new Error('Department not found.');
@@ -100,6 +101,8 @@ return res.status(201).json({
 
   let departmentId = null;
 if (department) {
+    console.log("Received department value:", department);
+
   const departmentData = await Department.findById(department);
   if (!departmentData) throw new Error(`Department not found.`);
   departmentId = departmentData._id;
