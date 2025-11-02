@@ -27,6 +27,7 @@ const registerHandler = async (req, res) => {
       contactNumber,
       designation,
       department,
+      schedule,
     } = req.body;
 
     const requesterRole = req.user?.role;
@@ -40,14 +41,17 @@ const registerHandler = async (req, res) => {
       throw new Error('Only Admin is allowed to register users.');
     }
 
+    // Check if user already exists
     const existingUser = await User.findOne({ email });
     if (existingUser) {
       throw new Error('User with this email already exists.');
     }
 
+    // Hash password
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
 
+    // Create user record
     const newUser = await User.create({
       name,
       email,
@@ -55,7 +59,7 @@ const registerHandler = async (req, res) => {
       role,
     });
 
-    // If role is ADMIN, we don’t need to check anything else
+    // Handle ADMIN
     if (role.toUpperCase() === 'ADMIN') {
       return res.status(201).json({
         message: 'Admin registered successfully.',
@@ -77,12 +81,15 @@ const registerHandler = async (req, res) => {
       const departmentData = await Department.findById(department);
       if (!departmentData) throw new Error('Department not found.');
 
-      const allDays = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
+      const allDays = [
+        'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'
+      ];
+
       const fullWeekSchedule = allDays.map(day => ({
         dayOfWeek: day,
         startTime: '00:00',
         endTime: '23:59',
-        isAvailable: true
+        isAvailable: true,
       }));
 
       const doctor = await Doctor.create({
@@ -91,50 +98,48 @@ const registerHandler = async (req, res) => {
         specialty: specialtyData._id,
         department: departmentData._id,
         medicalLicenseNumber,
-        schedule: schedule && schedule.length ? schedule : fullWeekSchedule
+        schedule: schedule && schedule.length ? schedule : fullWeekSchedule,
       });
 
       return res.status(201).json({
         message: 'Doctor registered successfully with schedule.',
         userId: newUser._id,
-        doctorId: doctor._id
+        doctorId: doctor._id,
       });
     }
 
-    // Handle STAFF
+    // ✅ Handle STAFF (fixed version)
     if (role.toUpperCase() === 'STAFF') {
       if (!contactNumber || !designation) {
         throw new Error('contactNumber and designation are required for Staff.');
       }
 
       let departmentId = null;
- if (department) {
-  console.log("📘 Department ID received from frontend:", department);
-  const departmentData = await Department.findById(department);
-  console.log("📗 Department data found in DB:", departmentData);
-  if (!departmentData) throw new Error(`Department '${department}' not found.`);
-  departmentId = departmentData._id;
-}
-
-
+      if (department) {
+        console.log("📘 Department ID received from frontend:", department);
+        const departmentData = await Department.findById(department);
+        console.log("📗 Department data found in DB:", departmentData);
+        if (!departmentData) throw new Error(`Department '${department}' not found.`);
+        departmentId = departmentData._id;
+      }
 
       const staff = await Staff.create({
         userId: newUser._id,
         contactNumber,
         designation,
-        department: departmentId
+        department: departmentId,
       });
 
       return res.status(201).json({
         message: 'Staff registered successfully.',
         userId: newUser._id,
-        staffId: staff._id
+        staffId: staff._id,
       });
     }
 
-    // If role is unknown
+    // Handle unknown roles
     throw new Error('Invalid role.');
-    
+
   } catch (error) {
     console.error('Registration error:', error.message);
     return res.status(400).json({ message: error.message });
