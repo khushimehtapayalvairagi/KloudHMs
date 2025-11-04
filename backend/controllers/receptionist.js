@@ -153,19 +153,17 @@ const getPatientByIdHandler = async (req, res) => {
 //   }
 // };
 
-
 const getAvailableDoctorsHandler = async (req, res) => {
   try {
     const { specialtyId, specialtyName } = req.body;
 
-    // Validate input
     if (!specialtyId && !specialtyName) {
       return res
         .status(400)
         .json({ message: 'specialtyId or specialtyName is required.' });
     }
 
-    // Find specialty either by ID or name
+    // 🩺 Find the specialty either by ID or by name
     const specialty = specialtyId
       ? await Specialty.findById(specialtyId)
       : await Specialty.findOne({
@@ -173,12 +171,10 @@ const getAvailableDoctorsHandler = async (req, res) => {
         });
 
     if (!specialty) {
-      return res
-        .status(404)
-        .json({ message: `Specialty not found for given data.` });
+      return res.status(404).json({ message: 'Specialty not found.' });
     }
 
-    // Find active doctors with that specialty
+    // 👩‍⚕️ Find doctors for that specialty
     const doctors = await Doctor.find({
       specialty: specialty._id,
       isActive: true,
@@ -193,7 +189,7 @@ const getAvailableDoctorsHandler = async (req, res) => {
         .json({ doctors: [], message: 'No doctors found for this specialty.' });
     }
 
-    // Prepare clean doctor list for frontend
+    // 🧩 MAP step: simplify the doctor objects
     const doctorList = doctors.map((doc) => ({
       doctorId: doc._id,
       name: doc.userId?.name || 'Unnamed Doctor',
@@ -202,8 +198,9 @@ const getAvailableDoctorsHandler = async (req, res) => {
       department: doc.department?.name || '',
     }));
 
+    // ✅ send clean data
     return res.status(200).json({
-      message: `Doctors for specialty fetched successfully.`,
+      message: 'Doctors for specialty fetched successfully.',
       doctors: doctorList,
     });
   } catch (error) {
@@ -213,6 +210,7 @@ const getAvailableDoctorsHandler = async (req, res) => {
       .json({ message: 'Error fetching doctors', error: error.message });
   }
 };
+
 
 
 
