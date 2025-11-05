@@ -651,7 +651,9 @@ exports.bulkUploadStaff = async (req, res) => {
           throw new Error(`Email '${row.email}' already exists.`);
 
         // ✅ 4. Create user
-        const hashedPassword = await bcrypt.hash(row.password || "123456", 10);
+const rawPassword = row.password ? String(row.password).trim() : "123456";
+const hashedPassword = await bcrypt.hash(rawPassword, 10);
+
         const newUser = await User.create({
           name: row.name,
           email: row.email,
