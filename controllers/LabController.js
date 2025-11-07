@@ -35,22 +35,34 @@ exports.getLabTests = async (req, res) => {
 };
 
 // Add test result
+// Add test result
 exports.addTestResult = async (req, res) => {
   try {
-    const { patientId, testType, date,  result } = req.body;
+    const { patientId, testType, date, result, results } = req.body;
+
+    // Normalize — accept either `result` or `results[]`
+    const finalResult = Array.isArray(results)
+      ? results.filter(r => r.trim() !== "")
+      : result
+      ? [result]
+      : [];
+
     const test = new LabTest({
       patientId,
       testType,
       date,
-       result, 
-      status: 'Pending'   // always pending first
+      results: finalResult, // always store array
+      status: "Pending",
     });
+
     await test.save();
-    res.status(201).json({ message: 'Lab test saved (Pending)', test });
+    res.status(201).json({ message: "Lab test saved (Pending)", test });
   } catch (err) {
-    res.status(500).json({ message: 'Server error' });
+    console.error("Error in addTestResult:", err);
+    res.status(500).json({ message: "Server error" });
   }
 };
+
 
 
 // Get appointments (simple: lab tests with future date)
