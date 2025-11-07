@@ -1,3 +1,4 @@
+
 const OPDConsultation = require('../models/OPDConsultation');
 const Visit = require('../models/Visit');
 const Patient = require('../models/Patient');
@@ -142,4 +143,4 @@ const getAssignedVisitsForDoctorHandler = async (req, res) => {
 };
 
 
-module.exports = {createOPDConsultationHandler,getPatientOPDConsultationsHandler,getAssignedVisitsForDoctorHandler};
+module.exports = {createOPDConsultationHandler,getPatientOPDConsultationsHandler,getAssignedVisitsForDo

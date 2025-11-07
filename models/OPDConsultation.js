@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 const mongoose = require('mongoose');
 
 const OPDConsultationSchema = new mongoose.Schema({
@@ -16,3 +17,10 @@ const OPDConsultationSchema = new mongoose.Schema({
 }, { timestamps: true });
 
 module.exports = mongoose.model('OPDConsultation', OPDConsultationSchema);
+=======
+// const mongoose = require('mongoose');
+
+
+
+// module.exports = mongoose.model('OPDConsultation', OPDConsultationSchema);
+>>>>>>> 668cd01f054762127c0ea672935610d0fbcf6876

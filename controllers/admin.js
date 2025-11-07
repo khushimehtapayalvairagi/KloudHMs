@@ -13,11 +13,7 @@ const ReferralPartner = require('../models/ReferralPartner');
 const OperationTheater = require('../models/OperationTheater');
 const IPDAdmission = require('../models/IPDAdmission');
 const bcrypt = require('bcrypt');
-
 const registerHandler = async (req, res) => {
-  // const session = await mongoose.startSession();
-  // session.startTransaction();
-
   try {
     const {
       name,
@@ -27,43 +23,50 @@ const registerHandler = async (req, res) => {
       doctorType,
       specialty,
       medicalLicenseNumber,
-      schedule,
       contactNumber,
       designation,
       department,
+      schedule,
     } = req.body;
 
-    const requesterRole = req.user.role;
+    const requesterRole = req.user?.role;
 
-    
     if (!name || !email || !password || !role) {
       throw new Error('Name, email, password, and role are required.');
     }
 
+    // Only admin can create users
     if (requesterRole !== 'ADMIN') {
       throw new Error('Only Admin is allowed to register users.');
     }
-    if (role === 'ADMIN') {
-    //   throw new Error('Admin cannot create another Admin.');
-    }
 
+    // Check if user already exists
     const existingUser = await User.findOne({ email });
     if (existingUser) {
       throw new Error('User with this email already exists.');
     }
 
+    // Hash password
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
 
+    // Create user record
     const newUser = await User.create({
       name,
       email,
       password: hashedPassword,
       role,
     });
-    // await newUser.save({ session });
 
-  
+    // Handle ADMIN
+    if (role.toUpperCase() === 'ADMIN') {
+      return res.status(201).json({
+        message: 'Admin registered successfully.',
+        userId: newUser._id,
+      });
+    }
+
+    // Handle DOCTOR
     if (role.toUpperCase() === 'DOCTOR') {
       if (!doctorType || !specialty || !medicalLicenseNumber) {
         throw new Error('doctorType, specialty, and medicalLicenseNumber are required for Doctor.');
@@ -72,53 +75,32 @@ const registerHandler = async (req, res) => {
       const specialtyData = await Specialty.findOne({
         name: new RegExp(`^${specialty.trim()}$`, 'i'),
       });
-      if (!specialtyData) {
-        throw new Error(`Specialty '${specialty}' not found.`);
-      }
-        const departmentData = await Department.findById(department);
-  if (!departmentData) {
-    throw new Error(`Department not found.`);
-  }
+      if (!specialtyData) throw new Error(`Specialty '${specialty}' not found.`);
 
-      // if (!Array.isArray(schedule) || schedule.length === 0) {
-      //   throw new Error('Schedule must be a non-empty array.');
-      // }
+      const departmentData = await Department.findById(department);
+      if (!departmentData) throw new Error('Department not found.');
 
-      // const validDays = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
-      // for (const entry of schedule) {
-      //   const { dayOfWeek, startTime, endTime, isAvailable } = entry;
-      //   if (!validDays.includes(dayOfWeek) || !startTime || !endTime || typeof isAvailable !== 'boolean') {
-      //     throw new Error('Invalid schedule entry.');
-      //   }
-      // }
+      const allDays = [
+        'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'
+      ];
 
-   
-      const existingDoctor = await Doctor.findOne({ userId: newUser._id });
-      if (existingDoctor) {
-        throw new Error('Doctor already exists for this user.');
-      }
-      const allDays = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
-  const fullWeekSchedule = allDays.map(day => ({
-    dayOfWeek: day,
-    startTime: '00:00',
-    endTime: '23:59',
-    isAvailable: true
-  }));
+      const fullWeekSchedule = allDays.map(day => ({
+        dayOfWeek: day,
+        startTime: '00:00',
+        endTime: '23:59',
+        isAvailable: true,
+      }));
 
-
-      const doctor =  await Doctor.create ({
+      const doctor = await Doctor.create({
         userId: newUser._id,
         doctorType,
         specialty: specialtyData._id,
-            department: departmentData._id,
+        department: departmentData._id,
         medicalLicenseNumber,
-        // schedule,
-         schedule: fullWeekSchedule
+        schedule: schedule && schedule.length ? schedule : fullWeekSchedule,
+         isActive: true,
       });
 
-      // await doctor.save({ session });
-
-      // await session.commitTransaction();
       return res.status(201).json({
         message: 'Doctor registered successfully with schedule.',
         userId: newUser._id,
@@ -126,50 +108,18 @@ const registerHandler = async (req, res) => {
       });
     }
 
-   
-    if (!contactNumber || !designation) {
-      throw new Error('contactNumber and designation are required for Staff.');
-    }
-
- 
-    let departmentId = null;
-    if (department) {
-      const departmentData = await Department.findOne({ name: department.trim() });
-      if (!departmentData) {
-        throw new Error(`Department '${department}' not found.`);
+    // ✅ Handle STAFF (fixed version)
+      if (role.toUpperCase() === 'STAFF') {
+      if (!contactNumber || !designation) {
+        throw new Error('contactNumber and designation are required for Staff.');
       }
-      departmentId = departmentData._id;
-    }
 
- 
-    const existingStaff = await Staff.findOne({ userId: newUser._id });
-    if (existingStaff) {
-      throw new Error('Staff already exists for this user.');
-    }
-
-    const staff = await Staff.create({
-      userId: newUser._id,
-      contactNumber,
-      designation,
-      department: departmentId,
-    });
-
-    // await staff.save({ session });
-
-    // await session.commitTransaction();
-    return res.status(201).json({
-      message: 'Staff registered successfully.',
-      userId: newUser._id,
-      staffId: staff._id,
-    });
-  } catch (error) {
-    console.error('Registration error:', error.message);
-    // await session.abortTransaction();
-    return res.status(400).json({ message: error.message });
-  } finally {
-    // session.endSession();
-  }
-};
+      let departmentId = null;
+     if (department) {
+  const departmentData = await Department.findById(department);
+  if (!departmentData) throw new Error('Department not found.');
+  departmentId = departmentData._id;
+}
 
 // const registerHandler = async (req, res) => {
 //   try {
@@ -232,9 +182,7 @@ const registerHandler = async (req, res) => {
 //         throw new Error('Department is required for Doctor.');
 //       }
 
-//       const departmentData = await Department.findById(department);
-//       if (!departmentData) {
-//         throw new Error('Department not found.');
+//       const departmentData = await Department.findById(department);tment not found.');
 //       }
 
 //       // Default full week schedule if none provided
@@ -614,19 +562,20 @@ const getAllDoctorsHandler = async (req, res) => {
     }
 };
 
-const getDoctorByIdHandler = async (req, res) => {
-    try {
-        const { id } = req.params;
 
-        const doctor = await Doctor.findById(id).populate('userId', 'name email role').populate('specialty', 'name');
-        if (!doctor) return res.status(404).json({ message: 'Doctor not found.' });
+// const getDoctorByIdHandler = async (req, res) => {
+//     try {
+//         const { id } = req.params;
 
-        res.status(200).json({ doctor });
-    } catch (error) {
-        console.error('Fetch Doctor By ID Error:', error);
-        res.status(500).json({ message: 'Server error.' });
-    }
-};
+//         const doctor = await Doctor.findById(id).populate('userId', 'name email role').populate('specialty', 'name');
+//         if (!doctor) return res.status(404).json({ message: 'Doctor not found.' });
+
+//         res.status(200).json({ doctor });
+//     } catch (error) {
+//         console.error('Fetch Doctor By ID Error:', error);
+//         res.status(500).json({ message: 'Server error.' });
+//     }
+// };
 
 const createReferralPartnerHandler = async (req, res) => {
     try {
@@ -703,6 +652,7 @@ const getAllOperationTheatersHandler = async (req, res) => {
 };
 
 
+
 const deleteUserHandler = async (req, res) => {
   try {
     const { id, role } = req.body;
@@ -715,40 +665,45 @@ const deleteUserHandler = async (req, res) => {
       const doctor = await Doctor.findById(id);
       if (!doctor) return res.status(404).json({ message: 'Doctor not found.' });
 
+      // ✅ Mark both doctor + user inactive
       doctor.isActive = false;
       await doctor.save();
 
-      await User.findByIdAndUpdate(doctor.userId, { isActive: false });
+      if (doctor.userId) {
+        await User.findByIdAndUpdate(doctor.userId, { isActive: false });
+      }
 
-      return res.status(200).json({ message: 'Doctor deactivated successfully.' });
+      return res.status(200).json({ message: 'Doctor set as inactive successfully.' });
 
     } else if (role === 'STAFF') {
       const staff = await Staff.findById(id);
       if (!staff) return res.status(404).json({ message: 'Staff not found.' });
 
-      
       staff.isActive = false;
       await staff.save();
 
-      await User.findByIdAndUpdate(staff.userId, { isActive: false });
+      if (staff.userId) {
+        await User.findByIdAndUpdate(staff.userId, { isActive: false });
+      }
 
-      return res.status(200).json({ message: 'Staff deactivated successfully.' });
+      return res.status(200).json({ message: 'Staff set as inactive successfully.' });
 
     } else {
       return res.status(400).json({ message: 'Invalid role. Only DOCTOR or STAFF allowed.' });
     }
-
   } catch (error) {
-    console.error('Delete User Error:', error);
+    console.error('Deactivate User Error:', error);
     res.status(500).json({ message: 'Server error.' });
   }
 };
+
 
 
 module.exports = {registerHandler,getAllUsersHandler,createDepartmentHandler,getAllDepartmentsHandler
     ,createSpecialtyHandler,getAllSpecialtiesHandler,createRoomCategoryHandler,getAllRoomCategoriesHandler,createWardHandler
     ,getAllWardsHandler,createLabourRoomHandler,getAllLabourRoomsHandler,createProcedureHandler,getAllProceduresHandler
     ,createManualChargeItemHandler,getAllManualChargeItemsHandler,getAllStaffHandler,getStaffByIdHandler
-    ,getAllDoctorsHandler,getDoctorByIdHandler,createReferralPartnerHandler,getAllReferralPartnersHandler,createOperationTheaterHandler
+    ,getAllDoctorsHandler,createReferralPartnerHandler,getAllReferralPartnersHandler,createOperationTheaterHandler
     ,getAllOperationTheatersHandler,deleteUserHandler
 };
+

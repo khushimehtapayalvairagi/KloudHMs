@@ -4,10 +4,13 @@ const {registerHandler,getAllUsersHandler,createDepartmentHandler
     ,getAllRoomCategoriesHandler,createWardHandler,getAllWardsHandler,createLabourRoomHandler,getAllLabourRoomsHandler
     ,createProcedureHandler,getAllProceduresHandler,createManualChargeItemHandler,getAllManualChargeItemsHandler
     ,getAllStaffHandler,getStaffByIdHandler,getAllDoctorsHandler
-    ,getDoctorByIdHandler,createReferralPartnerHandler,getAllReferralPartnersHandler,createOperationTheaterHandler
+    ,createReferralPartnerHandler,getAllReferralPartnersHandler,createOperationTheaterHandler
     ,getAllOperationTheatersHandler,deleteUserHandler}  = require("../controllers/admin")
-
+const {createInventoryItem} = require('../controllers/inventoryManager');
 const router = express.Router();
+
+
+router.post('/items', createInventoryItem);
 router.post('/users', registerHandler); 
 router.get('/users', getAllUsersHandler);
 router.delete('/users',deleteUserHandler);
@@ -28,7 +31,7 @@ router.get('/manual-charge-items', getAllManualChargeItemsHandler);
 router.get('/staff', getAllStaffHandler);
 router.get('/staff/:id', getStaffByIdHandler);
 router.get('/doctors', getAllDoctorsHandler);
-router.get('/doctors/:id', getDoctorByIdHandler);
+// router.get('/doctors/:id', getDoctorByIdHandler);
 router.post('/referral-partners', createReferralPartnerHandler);
 router.get('/referral-partners', getAllReferralPartnersHandler);
 router.post('/operation-theaters', createOperationTheaterHandler);
