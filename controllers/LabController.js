@@ -64,42 +64,50 @@ exports.getAppointments = async (req, res) => {
 };
 exports.uploadReport = async (req, res) => {
   try {
-    if (!req.file) {
-      return res.status(400).json({ message: 'No file uploaded' });
+    const { testId, amount, paymentStatus = "Pending", notes = "" } = req.body;
+
+    // Optional file path logic (if you still want to keep it)
+    let filePath = null;
+    if (req.file) {
+      filePath = `/uploads/labReports/${req.file.filename}`;
     }
 
+    const updateData = {
+      status: "Completed",
+      labTechnician: req.user._id,
+    };
+    if (filePath) {
+      updateData.reportFile = filePath;
+    }
 
-    const { testId, amount, paymentStatus } = req.body;
-    const filePath = `/uploads/labReports/${req.file.filename}`;
-
-const test = await LabTest.findByIdAndUpdate(
-  testId,
-  { reportFile: filePath, status: 'Completed', labTechnician: req.user._id }, // set logged in staff as technician
-  { new: true }
-)
-  .populate('patientId')
-  .populate({ path: 'labTechnician', populate: { path: 'userId', select: 'name' } });
-
-const technicianName = test.labTechnician?.userId?.name || "Not Assigned";
+    const test = await LabTest.findByIdAndUpdate(
+      testId,
+      updateData,
+      { new: true }
+    )
+      .populate("patientId")
+      .populate({ path: "labTechnician", populate: { path: "userId", select: "name" } });
 
     if (!test) {
-      return res.status(404).json({ message: 'Test not found' });
+      return res.status(404).json({ message: "Test not found" });
     }
+
+    const technicianName = test.labTechnician?.userId?.name || "Not Assigned";
 
     if (amount) {
       await LabPayment.create({
         patientId: test.patientId,
         testId: test._id,
         amount,
-        status: paymentStatus || 'Pending',
+        status: paymentStatus,
+        notes,
       });
     }
 
-    res.json({ message: 'Report uploaded and payment created',  test,
-  technicianName});
+    return res.json({ message: "Report updated & payment created", test, technicianName });
   } catch (err) {
-    console.error("Upload report error:", err);
-    res.status(500).json({ message: 'Server error' });
+    console.error("Error in uploadReport:", err);
+    return res.status(500).json({ message: "Server error" });
   }
 };
 
