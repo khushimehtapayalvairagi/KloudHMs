@@ -6,9 +6,9 @@ const setupSocket = (server) => {
   io = new Server(server, {
     cors: {
       origin: [
-        "http://localhost:3000",
-        "https://kashichem.com",
-        "http://kashichem.com",
+        // "http://localhost:3000",
+       "https://kashichem.com",
+         "http://kashichem.com",
 
         //  "https://kloudcrm.site",
       ],

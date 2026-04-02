@@ -23,8 +23,8 @@ app.use(
     // origin: ["https://uudra.in", "http://localhost:3000"],
         // origin: ["http://localhost:3000"],
           // origin: ["https://kloudcrm.site", "http://kloudcrm.site", "https://www.kloudcrm.site"],
-           origin: [ "https://kashichem.com",  // ✅ Add this line
-      "http://kashichem.com" ],
+          origin: [ "https://kashichem.com",  // ✅ Add this line
+      "http://kashichem.com"],
 
         credentials: true,
   })
@@ -70,4 +70,5 @@ app.use('/api/ipd', restrictToLoggedInUserOnly,restrictTo(['ADMIN', 'DOCTOR', 'S
 app.use('/api/procedures',restrictToLoggedInUserOnly, restrictTo(['ADMIN', 'DOCTOR', 'STAFF']), restrictToDesignation(['Receptionist', 'Head Nurse']),procedure);
 app.use('/api/inventory',restrictToLoggedInUserOnly,restrictTo(['ADMIN', 'STAFF']),restrictToDesignation(['Inventory Manager']),inventoryManager);
 app.use('/api/reports',restrictToLoggedInUserOnly, restrictTo(['ADMIN']),reports);
+
 
