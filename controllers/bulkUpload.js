@@ -781,13 +781,13 @@ exports.bulkUploadStaff = async (req, res) => {
     const errors = [];
     let successCount = 0;
 
-    const allowedDesignations = [
-      "Head Nurse",
-      "Lab Technician",
-      "Receptionist",
-      "Inventory Manager",
-      "Other"
-    ];
+    // const allowedDesignations = [
+    //   "Head Nurse",
+    //   "Lab Technician",
+    //   "Receptionist",
+    //   "Inventory Manager",
+    //   "Other"
+    // ];
 
     for (let i = 0; i < data.length; i++) {
       const row = data[i];
@@ -809,13 +809,14 @@ exports.bulkUploadStaff = async (req, res) => {
           throw new Error("Invalid email format");
         }
 
-        const designation = allowedDesignations.find(
-          d => d.toLowerCase() === designationRaw.toLowerCase()
-        );
+         const designation = designationRaw; // 🔥 direct use karo
+        // const designation = allowedDesignations.find(
+        //   d => d.toLowerCase() === designationRaw.toLowerCase()
+        // );
 
-        if (!designation) {
-          throw new Error(`Invalid designation '${designationRaw}'`);
-        }
+        // if (!designation) {
+        //   throw new Error(`Invalid designation '${designationRaw}'`);
+        // }
 
         // // Find or create user
         // let user = await User.findOne({ email });
