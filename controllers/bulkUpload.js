@@ -817,10 +817,10 @@ exports.bulkUploadStaff = async (req, res) => {
           throw new Error(`Invalid designation '${designationRaw}'`);
         }
 
-        // Find or create user
-        let user = await User.findOne({ email });
+        // // Find or create user
+        // let user = await User.findOne({ email });
 
-        if (!user) {
+        // if (!user) {
           const hashedPassword = await bcrypt.hash(password || "123456", 10);
           user = await User.create({
             name,
@@ -828,7 +828,7 @@ exports.bulkUploadStaff = async (req, res) => {
             password: hashedPassword,
             role: "STAFF"
           });
-        }
+        // }
 
         // Prepare staff payload
         const staffPayload = {
@@ -843,11 +843,12 @@ exports.bulkUploadStaff = async (req, res) => {
         }
 
         // Upsert staff (NO SKIP)
-        await Staff.findOneAndUpdate(
-          { userId: user._id },
-          staffPayload,
-          { upsert: true, new: true }
-        );
+     await Staff.create({
+  userId: user._id,
+  designation,
+  contactNumber: contactNumberRaw || null,
+  isActive: true
+});
 
         successCount++;
       } catch (err) {
