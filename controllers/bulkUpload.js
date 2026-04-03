@@ -789,73 +789,48 @@ exports.bulkUploadStaff = async (req, res) => {
     //   "Other"
     // ];
 
-    for (let i = 0; i < data.length; i++) {
-      const row = data[i];
-      const rowNum = i + 2;
+   for (let i = 0; i < data.length; i++) {
+  const row = data[i];
+  const rowNum = i + 2;
 
-      try {
-        const name = String(row.name || "").trim();
-        const email = String(row.email || "").trim().toLowerCase();
-        const password = String(row.password || "").trim();
-        const contactNumberRaw = String(row.contactNumber || "").trim();
-        const designationRaw = String(row.designation || "").trim();
+  try {
+    const name = String(row.name || "").trim();
+    const email = String(row.email || "").trim().toLowerCase();
+    const password = String(row.password || "").trim();
+    const contactNumberRaw = String(row.contactNumber || "").trim();
+    const designation = String(row.designation || "").trim();
 
-        // Required fields
-        if (!name || !email || !designationRaw) {
-          throw new Error("Missing name, email or designation");
-        }
-
-        if (!/^\S+@\S+\.\S+$/.test(email)) {
-          throw new Error("Invalid email format");
-        }
-
-         const designation = designationRaw; // 🔥 direct use karo
-        // const designation = allowedDesignations.find(
-        //   d => d.toLowerCase() === designationRaw.toLowerCase()
-        // );
-
-        // if (!designation) {
-        //   throw new Error(`Invalid designation '${designationRaw}'`);
-        // }
-
-        // // Find or create user
-        // let user = await User.findOne({ email });
-
-        // if (!user) {
-          const hashedPassword = await bcrypt.hash(password || "123456", 10);
-          user = await User.create({
-            name,
-            email,
-            password: hashedPassword,
-            role: "STAFF"
-          });
-        // }
-
-        // Prepare staff payload
-        const staffPayload = {
-          userId: user._id,
-          designation,
-          isActive: true
-        };
-
-        // Only set contactNumber if present
-        if (contactNumberRaw) {
-          staffPayload.contactNumber = contactNumberRaw;
-        }
-
-        // Upsert staff (NO SKIP)
-     await Staff.create({
-  userId: user._id,
-  designation,
-  contactNumber: contactNumberRaw || null,
-  isActive: true
-});
-
-        successCount++;
-      } catch (err) {
-        errors.push({ row: rowNum, error: err.message });
-      }
+    if (!name || !email || !designation) {
+      throw new Error("Missing name, email or designation");
     }
+
+    if (!/^\S+@\S+\.\S+$/.test(email)) {
+      throw new Error("Invalid email format");
+    }
+
+    const hashedPassword = await bcrypt.hash(password || "123456", 10);
+
+    const user = await User.create({
+      name,
+      email,
+      password: hashedPassword,
+      role: "STAFF"
+    });
+
+    await Staff.create({
+      userId: user._id,
+      designation,
+      contactNumber: contactNumberRaw || null,
+      isActive: true
+    });
+
+    successCount++;
+
+  } catch (err) {
+    console.log(`Row ${rowNum} error:`, err.message); // 🔥 ADD THIS
+    errors.push({ row: rowNum, error: err.message });
+  }
+}
 
     return res.status(200).json({
       message: "Staff bulk upload completed",
