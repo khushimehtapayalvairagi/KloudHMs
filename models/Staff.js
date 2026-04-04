@@ -6,19 +6,24 @@ contactNumber: {
     type: String,
     default: null
   },
-enum: [
-  'Head Nurse',
-  'Lab Technician',
-  'Receptionist',
-  'Inventory Manager',
-  'Other',
-  'Pathologist',
-  'Metron',
-  'X-Ray Technicians',
-  'Sonography Assist',
-  'O.T. Attendant',
-  'Pharmacists'
-],
+  designation: {
+    type: String,
+    enum: [
+      'Head Nurse',
+      'Lab Technician',
+      'Receptionist',
+      'Inventory Manager',
+      'Other',
+      'Pathologist',
+      'Metron',
+      'X-Ray Technicians',
+      'Sonography Assist',
+      'O.T. Attendant',
+      'Pharmacists'
+    ],
+    required: true
+  },
+
    // department: { type: mongoose.Schema.Types.ObjectId, ref: 'Department' },
  
 
