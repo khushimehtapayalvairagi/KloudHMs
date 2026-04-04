@@ -781,56 +781,59 @@ exports.bulkUploadStaff = async (req, res) => {
     const errors = [];
     let successCount = 0;
 
-    // const allowedDesignations = [
-    //   "Head Nurse",
-    //   "Lab Technician",
-    //   "Receptionist",
-    //   "Inventory Manager",
-    //   "Other"
-    // ];
+    for (let i = 0; i < data.length; i++) {
+      const row = data[i];
+      const rowNum = i + 2;
 
-   for (let i = 0; i < data.length; i++) {
-  const row = data[i];
-  const rowNum = i + 2;
+      try {
+        const name = String(row.name || "").trim();
+        const email = String(row.email || "").trim().toLowerCase();
+        const password = String(row.password || "").trim();
+        const contactNumberRaw = String(row.contactNumber || "").trim();
+        const designation = String(row.designation || "").trim();
 
-  try {
-    const name = String(row.name || "").trim();
-    const email = String(row.email || "").trim().toLowerCase();
-    const password = String(row.password || "").trim();
-    const contactNumberRaw = String(row.contactNumber || "").trim();
-    const designation = String(row.designation || "").trim();
+        // ✅ Required fields check
+        if (!name || !email || !designation) {
+          throw new Error("Missing name, email or designation");
+        }
 
-    if (!name || !email || !designation) {
-      throw new Error("Missing name, email or designation");
+        // ✅ Email format check
+        if (!/^\S+@\S+\.\S+$/.test(email)) {
+          throw new Error("Invalid email format");
+        }
+
+        // ✅ Duplicate email check
+        const existingUser = await User.findOne({ email });
+        if (existingUser) {
+          throw new Error("Email already exists");
+        }
+
+        // ✅ Hash password
+        const hashedPassword = await bcrypt.hash(password || "123456", 10);
+
+        // ✅ Create user
+        const user = await User.create({
+          name,
+          email,
+          password: hashedPassword,
+          role: "STAFF"
+        });
+
+        // ✅ Create staff (IMPORTANT FIX HERE)
+        await Staff.create({
+          userId: user._id,
+          designation,
+          contactNumber: contactNumberRaw || undefined, // ❗ FIXED (no null)
+          isActive: true
+        });
+
+        successCount++;
+
+      } catch (err) {
+        console.log(`Row ${rowNum} error:`, err.message);
+        errors.push({ row: rowNum, error: err.message });
+      }
     }
-
-    if (!/^\S+@\S+\.\S+$/.test(email)) {
-      throw new Error("Invalid email format");
-    }
-
-    const hashedPassword = await bcrypt.hash(password || "123456", 10);
-
-    const user = await User.create({
-      name,
-      email,
-      password: hashedPassword,
-      role: "STAFF"
-    });
-
-    await Staff.create({
-      userId: user._id,
-      designation,
-      contactNumber: contactNumberRaw || null,
-      isActive: true
-    });
-
-    successCount++;
-
-  } catch (err) {
-    console.log(`Row ${rowNum} error:`, err.message); // 🔥 ADD THIS
-    errors.push({ row: rowNum, error: err.message });
-  }
-}
 
     return res.status(200).json({
       message: "Staff bulk upload completed",
