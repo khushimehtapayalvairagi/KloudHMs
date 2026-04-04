@@ -781,56 +781,78 @@ exports.bulkUploadStaff = async (req, res) => {
     const errors = [];
     let successCount = 0;
 
-    // const allowedDesignations = [
-    //   "Head Nurse",
-    //   "Lab Technician",
-    //   "Receptionist",
-    //   "Inventory Manager",
-    //   "Other"
-    // ];
+    const allowedDesignations = [
+      'Head Nurse',
+      'Lab Technician',
+      'Receptionist',
+      'Inventory Manager',
+      'Other',
+      'Pathologist',
+      'Metron',
+      'X-Ray Technicians',
+      'Sonography Assist',
+      'O.T. Attendant',
+      'Pharmacists'
+    ];
 
-   for (let i = 0; i < data.length; i++) {
-  const row = data[i];
-  const rowNum = i + 2;
+    for (let i = 0; i < data.length; i++) {
+      const row = data[i];
+      const rowNum = i + 2;
 
-  try {
-    const name = String(row.name || "").trim();
-    const email = String(row.email || "").trim().toLowerCase();
-    const password = String(row.password || "").trim();
-    const contactNumberRaw = String(row.contactNumber || "").trim();
-    const designation = String(row.designation || "").trim();
+      try {
+        const name = String(row.name || "").trim();
+        const email = String(row.email || "").trim().toLowerCase();
+        const password = String(row.password || "123456").trim();
+        const contactNumber = String(row.contactNumber || "").trim();
+        const designation = String(row.designation || "").trim();
 
-    if (!name || !email || !designation) {
-      throw new Error("Missing name, email or designation");
+        // ✅ required validation
+        if (!name || !email || !designation) {
+          throw new Error("Missing name, email or designation");
+        }
+
+        // ✅ email validation
+        if (!/^\S+@\S+\.\S+$/.test(email)) {
+          throw new Error("Invalid email format");
+        }
+
+        // ✅ designation validation
+        if (!allowedDesignations.includes(designation)) {
+          throw new Error("Invalid designation");
+        }
+
+        // 🔥 DUPLICATE CHECK (MOST IMPORTANT)
+        const existingUser = await User.findOne({ email });
+
+        if (existingUser) {
+          throw new Error("Email already exists");
+        }
+
+        const hashedPassword = await bcrypt.hash(password, 10);
+
+        // ✅ create user
+        const user = await User.create({
+          name,
+          email,
+          password: hashedPassword,
+          role: "STAFF"
+        });
+
+        // ✅ create staff
+        await Staff.create({
+          userId: user._id,
+          designation,
+          contactNumber: contactNumber || null,
+          isActive: true
+        });
+
+        successCount++;
+
+      } catch (err) {
+        console.log(`Row ${rowNum} error:`, err.message);
+        errors.push({ row: rowNum, error: err.message });
+      }
     }
-
-    if (!/^\S+@\S+\.\S+$/.test(email)) {
-      throw new Error("Invalid email format");
-    }
-
-    const hashedPassword = await bcrypt.hash(password || "123456", 10);
-
-    const user = await User.create({
-      name,
-      email,
-      password: hashedPassword,
-      role: "STAFF"
-    });
-
-    await Staff.create({
-      userId: user._id,
-      designation,
-      contactNumber: contactNumberRaw || null,
-      isActive: true
-    });
-
-    successCount++;
-
-  } catch (err) {
-    console.log(`Row ${rowNum} error:`, err.message); // 🔥 ADD THIS
-    errors.push({ row: rowNum, error: err.message });
-  }
-}
 
     return res.status(200).json({
       message: "Staff bulk upload completed",
