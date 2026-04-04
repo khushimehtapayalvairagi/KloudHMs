@@ -25,7 +25,7 @@ contactNumber: {
    designation: { 
   type: String, 
   required: true 
-}
+},
    isActive: { type: Boolean, default: true }   
 
 });
