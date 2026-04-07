@@ -334,7 +334,7 @@ exports.bulkUploadProcedures = async (req, res) => {
 
 
 
-exports.bulkUploadWards = async (req, res) => {
+export const bulkUploadWards = async (req, res) => {
   if (!req.file)
     return res.status(400).json({ message: "No file uploaded" });
 
@@ -351,39 +351,51 @@ exports.bulkUploadWards = async (req, res) => {
   fs.unlinkSync(req.file.path);
 
   const errorRows = [];
+  const successRows = [];
   const wardsToInsert = [];
 
-  for (let i = 0; i < data.length; i++) {
-    const rowIndex = i + 2;
-    const row = data[i];
+  // ================= NORMALIZE CATEGORY =================
+ const normalizeCategory = (val) => {
+  val = val.toLowerCase().trim();
 
-    const name = String(row.name || "").trim();
-    const roomCatName = String(row.roomCategory || "").trim();
-    const bedsStr = String(row.beds || "").trim();
+  // ICU cases
+  if (val.includes("icu") || val.includes("intensive care"))
+    return "ICU";
 
-    if (!name || !roomCatName || !bedsStr) {
-      errorRows.push(rowIndex);
-      continue;
-    }
+  // HDU cases
+  if (val.includes("hdu") || val.includes("standard hospital"))
+    return "HDU";
 
-    const roomCat = await RoomCategory.findOne({
-      $or: [{ name: roomCatName }, { description: roomCatName }],
-    });
+  // DELUX
+  if (val.includes("delux"))
+    return "DELUX ROOM";
 
-    if (!roomCat) {
-      errorRows.push(rowIndex);
-      continue;
-    }
+  // General ward
+  if (val.includes("general ward") && val.includes("female"))
+    return "General Ward Female";
 
+  if (val.includes("general ward") && val.includes("male"))
+    return "General Ward Male";
+
+  if (val.includes("general ward"))
+    return "General Ward";
+
+  return val;
+};
+
+  // ================= PARSE BEDS =================
+  const parseBeds = (bedsStr) => {
     const parts = bedsStr.split(",").map((x) => x.trim()).filter(Boolean);
     const beds = [];
 
     for (const p of parts) {
-      const lower = p.toLowerCase();
-      if (lower.includes("to")) {
-        const [startStr, , endStr] = p.split(" ");
-        const start = parseInt(startStr);
-        const end = parseInt(endStr);
+      // match "1 To 10" OR "1 to 10"
+      const match = p.match(/(\d+)\s*to\s*(\d+)/i);
+
+      if (match) {
+        const start = parseInt(match[1]);
+        const end = parseInt(match[2]);
+
         if (!isNaN(start) && !isNaN(end)) {
           for (let num = start; num <= end; num++) {
             beds.push({ bedNumber: num, status: "available" });
@@ -397,35 +409,93 @@ exports.bulkUploadWards = async (req, res) => {
       }
     }
 
-    if (!beds.length) {
-      errorRows.push(rowIndex);
+    return beds;
+  };
+
+  // ================= MAIN LOOP =================
+  for (let i = 0; i < data.length; i++) {
+    const rowIndex = i + 2;
+    const row = data[i];
+
+    const name = String(row.name || "").trim();
+    const roomCatRaw = String(row.roomCategory || "").trim();
+    const bedsStr = String(row.beds || "").trim();
+
+    // ❌ validation
+    if (!name || !roomCatRaw || !bedsStr) {
+      errorRows.push({ row: rowIndex, error: "Missing required fields" });
       continue;
     }
 
+    // ✅ normalize category
+    const normalizedCat = normalizeCategory(roomCatRaw);
+
+    let roomCat;
+
+    try {
+      // 🔥 FLEXIBLE SEARCH
+      roomCat = await RoomCategory.findOne({
+        $or: [
+          { name: { $regex: normalizedCat, $options: "i" } },
+          { description: { $regex: roomCatRaw, $options: "i" } }
+        ]
+      });
+
+      // 🔥 AUTO CREATE CATEGORY
+      if (!roomCat) {
+        roomCat = await RoomCategory.create({
+          name: normalizedCat,
+          description: roomCatRaw,
+        });
+      }
+    } catch (err) {
+      errorRows.push({
+        row: rowIndex,
+        error: "Room category error",
+      });
+      continue;
+    }
+
+    // ✅ parse beds
+    const beds = parseBeds(bedsStr);
+
+    if (!beds.length) {
+      errorRows.push({
+        row: rowIndex,
+        error: "Invalid bed format",
+      });
+      continue;
+    }
+
+    // ✅ push data
     wardsToInsert.push({
       name,
       roomCategory: roomCat._id,
       beds,
     });
+
+    successRows.push(rowIndex);
   }
 
-  if (errorRows.length > 0) {
-    return res.status(400).json({
-      message: "Validation failed at rows",
-      errorRows,
-    });
-  }
-
+  // ================= INSERT =================
   try {
-    await Ward.insertMany(wardsToInsert, { ordered: true });
-    res.json({
-      message: "Wards uploaded successfully",
-      count: wardsToInsert.length,
+    const inserted = await Ward.insertMany(wardsToInsert, {
+      ordered: false, // 🔥 continue on duplicates
     });
+
+    return res.json({
+      message: "Bulk upload completed",
+      successCount: inserted.length,
+      failedCount: errorRows.length,
+      errors: errorRows,
+      successRows,
+    });
+
   } catch (err) {
-    res.status(500).json({
+    return res.status(500).json({
       message: "Upload failed",
       error: err.message,
+      partialErrors: errorRows,
     });
   }
 };
@@ -758,11 +828,6 @@ exports.bulkUploadDoctors = async (req, res) => {
 };
 
 
-
-
-
-
-// ----------- BULK UPLOAD STAFF -----------
 
 // ----------- BULK UPLOAD STAFF -----------
 exports.bulkUploadStaff = async (req, res) => {
