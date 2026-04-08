@@ -334,7 +334,7 @@ exports.bulkUploadProcedures = async (req, res) => {
 
 
 
-export const bulkUploadWards = async (req, res) => {
+exports.bulkUploadWards = async (req, res) => {
   if (!req.file)
     return res.status(400).json({ message: "No file uploaded" });
 
