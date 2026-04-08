@@ -299,10 +299,10 @@ const createVisitHandler = async (req, res) => {
     }
 
     // ✅ ONLY OPD GETS RECEIPT NUMBER
-    let receiptNumber;
-    if (visitType === 'OPD') {
-      receiptNumber = generateReceiptNumber();
-    }
+    // let receiptNumber;
+    // if (visitType === 'OPD') {
+    //   receiptNumber = generateReceiptNumber();
+    // }
 
     const newVisit = new Visit({
       patientId: patient.patientId,
@@ -310,7 +310,7 @@ const createVisitHandler = async (req, res) => {
       visitType,
       assignedDoctorId,
       referredBy: referralPartnerId,
-      receiptNumber,
+      // receiptNumber,
       status: 'Registered',
       payment: visitType === 'OPD' ? payment : undefined
     });
