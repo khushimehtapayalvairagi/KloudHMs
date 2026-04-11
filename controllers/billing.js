@@ -106,7 +106,7 @@ exports.getBillsByPatient = async (req, res) => {
 exports.addPaymentToBill = async (req, res) => {
   try {
     const { bill_id_ref, amount_paid, payment_method, external_reference_number, received_by_user_id_ref } = req.body;
-    if (!bill_id_ref || !amount_paid || !payment_method || !received_by_user_id_ref) {
+    if (!bill_id_ref || amount_paid === undefined || !payment_method || !received_by_user_id_ref) {
       return res.status(400).json({ message: 'Missing payment info.' });
     }
 
