@@ -604,7 +604,7 @@ const parseFile = (filePath) => {
   }
 };
 
-// ----------- BULK UPLOAD SPECIALTY -----------
+// ---------- BULK UPLOAD SPECIALTY ----------
 exports.bulkUploadSpeciality = async (req, res) => {
   if (!req.file) return res.status(400).json({ message: "No file uploaded" });
   try {
@@ -629,7 +629,7 @@ exports.bulkUploadSpeciality = async (req, res) => {
   }
 };
 
-// ----------- BULK UPLOAD DEPARTMENT -----------
+// ---------- BULK UPLOAD DEPARTMENT ----------
 
 
 
@@ -695,7 +695,7 @@ exports.bulkUploadDepartment = async (req, res) => {
 
 
 
-// ----------- BULK UPLOAD DOCTORS -----------
+// ---------- BULK UPLOAD DOCTORS ----------
 exports.bulkUploadDoctors = async (req, res) => {
   if (!req.file) {
     return res.status(400).json({ message: "No file uploaded" });
@@ -829,7 +829,7 @@ exports.bulkUploadDoctors = async (req, res) => {
 
 
 
-// ----------- BULK UPLOAD STAFF -----------
+// ---------- BULK UPLOAD STAFF ----------
 exports.bulkUploadStaff = async (req, res) => {
   if (!req.file) {
     return res.status(400).json({ message: "No file uploaded" });

@@ -445,7 +445,7 @@ const bcrypt = require('bcrypt');
 //   }
 // }
 
-;
+
 
 const registerHandler = async (req, res) => {
   try {
