@@ -8,26 +8,42 @@ const loginHandler = async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    const user = await User.findOne({ email });
-    if (!user) {
-      return res.status(401).json({ message: 'Invalid email or password' });
-    }
- 
-    const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch) {
+    // 🔥 STEP 1: same email ke saare users lao
+    const users = await User.find({ email });
+
+    if (!users.length) {
       return res.status(401).json({ message: 'Invalid email or password' });
     }
 
+    let matchedUser = null;
+
+    // 🔥 STEP 2: correct password wala user find karo
+    for (const u of users) {
+      const isMatch = await bcrypt.compare(password, u.password);
+      if (isMatch) {
+        matchedUser = u;
+        break;
+      }
+    }
+
+    if (!matchedUser) {
+      return res.status(401).json({ message: 'Invalid email or password' });
+    }
+
+    // 🔥 STEP 3: ab original logic use karo
     let extraInfo = {};
     let tokenPayload = {
-      userId: user._id,
-      email: user.email,
-      role: user.role,
+      userId: matchedUser._id,
+      email: matchedUser.email,
+      role: matchedUser.role,
     };
-    let staff=null;
-    let doctor=null;
-    if (user.role === 'STAFF') {
-      staff = await Staff.findOne({ userId: user._id });
+
+    let staff = null;
+    let doctor = null;
+
+    if (matchedUser.role === 'STAFF') {
+      staff = await Staff.findOne({ userId: matchedUser._id });
+
       if (!staff) {
         return res.status(404).json({ message: 'Staff profile not found.' });
       }
@@ -35,42 +51,40 @@ const loginHandler = async (req, res) => {
       extraInfo = {
         designation: staff.designation,
         contactNumber: staff.contactNumber,
-        // department: staff.department ? staff.department.name : null
       };
 
-      tokenPayload._id = staff._id; 
+      tokenPayload._id = staff._id;
       tokenPayload.designation = staff.designation;
 
-    } else if (user.role === 'DOCTOR') {
-      doctor = await Doctor.findOne({ userId: user._id });
+    } else if (matchedUser.role === 'DOCTOR') {
+      doctor = await Doctor.findOne({ userId: matchedUser._id });
+
       if (!doctor) {
         return res.status(404).json({ message: 'Doctor profile not found.' });
       }
 
-      tokenPayload._id = doctor._id; 
-    } else {
-      tokenPayload._id = user._id; 
+      tokenPayload._id = doctor._id;
     }
 
-    const token = setUser(tokenPayload); 
+    const token = setUser(tokenPayload);
 
-    let finalId = user._id;
-    if (user.role === 'STAFF' && staff) {
+    let finalId = matchedUser._id;
+
+    if (matchedUser.role === 'STAFF' && staff) {
       finalId = staff._id;
-    } else if (user.role === 'DOCTOR' && doctor) {
+    } else if (matchedUser.role === 'DOCTOR' && doctor) {
       finalId = doctor._id;
     }
 
-    // console.log(finalId);
     res.status(200).json({
       message: 'Login successful',
       token,
       user: {
         id: finalId,
-        userId:user._id,
-        name: user.name,
-        email: user.email,
-        role: user.role,
+        userId: matchedUser._id,
+        name: matchedUser.name,
+        email: matchedUser.email,
+        role: matchedUser.role,
         ...extraInfo
       }
     });
