@@ -38,6 +38,7 @@ exports.getLabTests = async (req, res) => {
 // Add test result
 exports.addTestResult = async (req, res) => {
   try {
+        console.log("BODY 👉", req.body);  
   const { patientId, testType, date, results, category, priority, notes } = req.body;
 
 
