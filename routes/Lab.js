@@ -12,7 +12,7 @@ router.get(
   '/patients',
   restrictToLoggedInUserOnly,
   restrictTo(['ADMIN', 'STAFF']),
-  restrictToDesignation(['Lab Technician']),
+  restrictToDesignation(['Pathologist']),
   getAllPatientsHandler
 );
 
