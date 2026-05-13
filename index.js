@@ -59,7 +59,7 @@ server.listen(PORT, () => {
 
 
 app.use('/api/auth', AuthHandler);
-app.use('/api/lab', labRoutes);
+app.use('/api/lab',restrictToLoggedInUserOnly,restrictTo(['ADMIN', 'STAFF']),restrictToDesignation(['Pathologist']), labRoutes);
 
 app.use('/api/billing', restrictToLoggedInUserOnly, restrictTo(['ADMIN', 'RECEPTIONIST', 'STAFF']), billingHandler);
 app.use('/api/admin', restrictToLoggedInUserOnly, restrictTo(['ADMIN',"STAFF"]), bulkUpload);

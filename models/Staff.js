@@ -10,7 +10,6 @@ contactNumber: {
     type: String,
     enum: [
       'Head Nurse',
-      'Lab Technician',
       'Receptionist',
       'Inventory Manager',
       'Other',

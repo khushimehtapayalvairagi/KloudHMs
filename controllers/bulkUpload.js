@@ -848,7 +848,7 @@ exports.bulkUploadStaff = async (req, res) => {
 
     const allowedDesignations = [
       'Head Nurse',
-      'Lab Technician',
+      
       'Receptionist',
       'Inventory Manager',
       'Other',

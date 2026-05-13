@@ -12,7 +12,7 @@ router.get(
   '/patients',
   restrictToLoggedInUserOnly,
   restrictTo(['ADMIN', 'STAFF']),
-  restrictToDesignation(['Lab Technician']),
+  restrictToDesignation(['Pathologist']),
   getAllPatientsHandler
 );
 
@@ -20,7 +20,7 @@ router.get(
   '/dashboard',
   restrictToLoggedInUserOnly,
   restrictTo(['ADMIN', 'STAFF']),
-  restrictToDesignation(['Lab Technician']),
+  restrictToDesignation(['Pathologist']),
   labController.getDashboardStats
 );
 
@@ -28,7 +28,7 @@ router.get(
   '/tests',
   restrictToLoggedInUserOnly,
   restrictTo(['ADMIN', 'STAFF']),
-  restrictToDesignation(['Lab Technician']),
+  restrictToDesignation(['Pathologist']),
   labController.getLabTests
 );
 
@@ -36,7 +36,7 @@ router.post(
   '/tests',
   restrictToLoggedInUserOnly,
   restrictTo(['ADMIN', 'STAFF']),
-  restrictToDesignation(['Lab Technician']),
+  restrictToDesignation(['Pathologist']),
   labController.addTestResult
 );
 
@@ -44,7 +44,7 @@ router.get(
   '/appointments',
   restrictToLoggedInUserOnly,
   restrictTo(['ADMIN', 'STAFF']),
-  restrictToDesignation(['Lab Technician']),
+  restrictToDesignation(['Pathologist']),
   labController.getAppointments
 );
 
@@ -63,7 +63,7 @@ router.post(
   '/upload-report',
   restrictToLoggedInUserOnly,
   restrictTo(['ADMIN', 'STAFF']),
-  restrictToDesignation(['Lab Technician']),
+  restrictToDesignation(['Pathologist']),
     upload.none(), 
   labController.uploadReport
 );
@@ -71,7 +71,7 @@ router.get(
   '/payments',
   restrictToLoggedInUserOnly,
   restrictTo(['ADMIN', 'STAFF']),
-  restrictToDesignation(['Lab Technician']),
+  restrictToDesignation(['Pathologist']),
   labController.getPendingPayments
 );
 
@@ -79,7 +79,7 @@ router.put(
   '/payments/:paymentId/pay',
   restrictToLoggedInUserOnly,
   restrictTo(['ADMIN', 'STAFF']),
-  restrictToDesignation(['Lab Technician']),
+  restrictToDesignation(['Pathologist']),
   labController.markPaymentPaid
 );
 
