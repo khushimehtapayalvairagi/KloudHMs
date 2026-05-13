@@ -1,3 +1,5 @@
+const mongoose = require('mongoose');
+
 const LabTestSchema = new mongoose.Schema({
   patientId: { type: mongoose.Schema.Types.ObjectId, ref: 'Patient', required: true },
   testType: { type: String, required: true },
@@ -17,3 +19,5 @@ const LabTestSchema = new mongoose.Schema({
   reportFile: String,
   labTechnician: { type: mongoose.Schema.Types.ObjectId, ref: "Staff" }
 });
+
+module.exports = mongoose.model('LabTest', LabTestSchema);
