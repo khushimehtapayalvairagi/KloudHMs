@@ -38,21 +38,24 @@ exports.getLabTests = async (req, res) => {
 // Add test result
 exports.addTestResult = async (req, res) => {
   try {
-    const { patientId, testType, date, results } = req.body;
+  const { patientId, testType, date, results, category, priority, notes } = req.body;
+
 
     // Ensure results is array of non-empty strings
     const finalResults = Array.isArray(results)
       ? results.filter(r => typeof r === 'string' && r.trim() !== "")
       : [];
 
-    const test = new LabTest({
-      patientId,
-      testType,
-      date,
-      results: finalResults,
-      status: "Pending",
-    });
-
+ const test = new LabTest({
+  patientId,
+  testType,
+  date,
+  results: finalResults,
+  category,
+  priority,
+  notes,
+  status: "Pending",
+});
     await test.save();
     res.status(201).json({ message: "Lab test saved (Pending)", test });
   } catch (err) {
