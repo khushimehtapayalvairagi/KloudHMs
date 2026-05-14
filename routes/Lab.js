@@ -67,15 +67,18 @@ router.post(
     upload.none(), 
   labController.uploadReport
 );
+// ✅ Pending only
+// router.get(
+//   '/payments/pending',
+//   restrictToLoggedInUserOnly,
+//   restrictTo(['ADMIN', 'STAFF']),
+//   restrictToDesignation(['Pathologist']),
+//   labController.getPendingPayments
+// );
+
+// ✅ ALL payments (history + pending)
 router.get(
-  '/payments',
-  restrictToLoggedInUserOnly,
-  restrictTo(['ADMIN', 'STAFF']),
-  restrictToDesignation(['Pathologist']),
-  labController.getPendingPayments
-);
-router.get(
-  '/payments',
+  '/payments/all',
   restrictToLoggedInUserOnly,
   restrictTo(['ADMIN', 'STAFF']),
   restrictToDesignation(['Pathologist']),
