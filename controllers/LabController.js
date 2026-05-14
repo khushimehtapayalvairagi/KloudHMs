@@ -125,11 +125,13 @@ exports.uploadReport = async (req, res) => {
   }
 };
 
-exports.getPendingPayments = async (req, res) => {
+exports.getAllPayments = async (req, res) => {
   try {
-    const payments = await LabPayment.find({ status: 'Pending' })
+    const payments = await LabPayment.find()
       .populate('patientId')
-      .populate('testId');
+      .populate('testId')
+      .sort({ createdAt: -1 }); // latest first
+
     res.json({ payments });
   } catch (err) {
     console.error(err);

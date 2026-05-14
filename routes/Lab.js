@@ -74,6 +74,14 @@ router.get(
   restrictToDesignation(['Pathologist']),
   labController.getPendingPayments
 );
+router.get(
+  '/payments',
+  restrictToLoggedInUserOnly,
+  restrictTo(['ADMIN', 'STAFF']),
+  restrictToDesignation(['Pathologist']),
+  labController.getAllPayments
+);
+
 
 router.put(
   '/payments/:paymentId/pay',
