@@ -28,8 +28,22 @@ exports.getDashboardStats = async (req, res) => {
 exports.getLabTests = async (req, res) => {
   try {
     const tests = await LabTest.find().populate('patientId');
-    res.json({ tests });
+
+    const testsWithPayments = await Promise.all(
+      tests.map(async (t) => {
+        const payment = await LabPayment.findOne({ testId: t._id });
+
+        return {
+          ...t.toObject(),
+          payment: payment || null
+        };
+      })
+    );
+
+    res.json({ tests: testsWithPayments });
+
   } catch (err) {
+    console.error(err);
     res.status(500).json({ message: 'Server error' });
   }
 };
