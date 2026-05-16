@@ -25,7 +25,6 @@ const registerAndCreateVisit = async (req, res) => {
       fullName, age, gender, address, dob,
       contactNumber, email, aadhaarNumber,
       relatives,
-
       visitType,
       assignedDoctorId,
       referredBy,
@@ -59,6 +58,11 @@ const registerAndCreateVisit = async (req, res) => {
 
     await patient.save();
 
+    // 🔥 IMPORTANT CHANGE
+    // OPD -> directly Waiting
+    // IPD -> Registered
+    const visitStatus = visitType === "OPD" ? "Waiting" : "Registered";
+
     // ✅ CREATE VISIT
     const visit = new Visit({
       patientId: patient.patientId,
@@ -67,10 +71,19 @@ const registerAndCreateVisit = async (req, res) => {
       assignedDoctorId,
       referredBy,
       payment: visitType === "OPD" ? payment : undefined,
-      status: "Registered"
+      status: visitStatus
     });
 
     await visit.save();
+
+    // 🔥 SOCKET EMIT DIRECTLY HERE
+    if (visitStatus === "Waiting") {
+      getIO().to(`doctor_${assignedDoctorId}`).emit("newAssignedPatient", {
+        doctorId: assignedDoctorId,
+        visitId: visit._id,
+        patientName: patient.fullName
+      });
+    }
 
     return res.status(201).json({
       message: "Patient + Visit created",
