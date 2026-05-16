@@ -29,7 +29,7 @@
 
 const express = require("express");
 const {registerPatientHandler,getAllPatientsHandler,getPatientByIdHandler,createVisitHandler,updateVisitStatusHandler,getVisitsByPatientHandler
-        ,getAvailableDoctorsHandler,getActivePatientsHandler,getUnbilledProceduresForPatientHandler}= require("../controllers/receptionist")
+        ,getAvailableDoctorsHandler,registerAndCreateVisit,getActivePatientsHandler,getUnbilledProceduresForPatientHandler}= require("../controllers/receptionist")
 const{getAllSpecialtiesHandler, registerAndCreateVisit,getAllProceduresHandler,getAllWardsHandler,getAllOperationTheatersHandler,getAllRoomCategoriesHandler,getAllReferralPartnersHandler, getAllDoctorsHandler,getAllLabourRoomsHandler} = require("../controllers/admin")
         const router = express.Router();
 
