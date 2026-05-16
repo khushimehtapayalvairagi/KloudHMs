@@ -19,6 +19,70 @@ const generatePatientId = () => {
 
     return `HSP${year}${month}${day}${hours}${minutes}${seconds}`;
 };
+const registerAndCreateVisit = async (req, res) => {
+  try {
+    const {
+      fullName, age, gender, address, dob,
+      contactNumber, email, aadhaarNumber,
+      relatives,
+
+      visitType,
+      assignedDoctorId,
+      referredBy,
+      payment
+    } = req.body;
+
+    // ✅ VALIDATION
+    if (!fullName || !age || !gender || !address) {
+      return res.status(400).json({ message: "Patient details missing" });
+    }
+
+    if (!visitType || !assignedDoctorId) {
+      return res.status(400).json({ message: "Visit details missing" });
+    }
+
+    // ✅ CREATE PATIENT
+    const patientId = generatePatientId();
+
+    const patient = new Patient({
+      patientId,
+      fullName,
+      age,
+      gender,
+      address,
+      dob,
+      contactNumber,
+      email,
+      aadhaarNumber,
+      relatives
+    });
+
+    await patient.save();
+
+    // ✅ CREATE VISIT
+    const visit = new Visit({
+      patientId: patient.patientId,
+      patientDbId: patient._id,
+      visitType,
+      assignedDoctorId,
+      referredBy,
+      payment: visitType === "OPD" ? payment : undefined,
+      status: "Registered"
+    });
+
+    await visit.save();
+
+    return res.status(201).json({
+      message: "Patient + Visit created",
+      patient,
+      visit
+    });
+
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server error" });
+  }
+};
 
 const registerPatientHandler = async (req, res) => {
   try {
@@ -494,7 +558,7 @@ const getUnbilledProceduresForPatientHandler = async (req, res) => {
   }
 };
 
-module.exports = {registerPatientHandler,getAllPatientsHandler,getPatientByIdHandler,createVisitHandler,updateVisitStatusHandler,getVisitsByPatientHandler
+module.exports = {registerPatientHandler,getAllPatientsHandler,getPatientByIdHandler,registerAndCreateVisit,createVisitHandler,updateVisitStatusHandler,getVisitsByPatientHandler
                 ,getAvailableDoctorsHandler,getActivePatientsHandler,getUnbilledProceduresForPatientHandler}
 
 
