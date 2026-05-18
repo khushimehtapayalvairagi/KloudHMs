@@ -25,8 +25,12 @@ const express = require('express');
 const router = express.Router();
 const { getCentralOPDRegister,getDepartmentWiseOPDRegister,getNewVsOldOPDPatients,getDoctorWiseOPDRegister,
     getCentralIPDRegister,getDepartmentWiseIPDRegister,getOTProcedureRegister,getAnesthesiaRegister,getOTFumigationReport,
-    getBirthRecordReport,getBillingSummaryReport,getPaymentReconciliationReport
+    getBirthRecordReport,getBillingSummaryReport, getSonographyReport,getPaymentReconciliationReport
  } = require('../controllers/reports');
+
+
+// const verifyToken = require("../middleware/verifyToken");
+
 
 router.get('/opd-register', getCentralOPDRegister);
 router.get('/opd-register/department-wise', getDepartmentWiseOPDRegister);
@@ -36,6 +40,19 @@ router.get('/ipd-register/central', getCentralIPDRegister);
 router.get('/ipd-register/department-wise', getDepartmentWiseIPDRegister);
 router.get('/procedures/ot-register',getOTProcedureRegister);
 router.get('/anesthesia-register', getAnesthesiaRegister);
+
+
+
+router.get('/sonography-report', getSonographyReport);
+// router.get('/sonography-report', verifyToken, getSonographyReport);
+// router.get(
+//   "/sonography-report",
+//   authMiddleware,
+//   reportController.getSonographyReport
+// );
+
+
+
 // router.get('/ot-fumigation-report', getOTFumigationReport);
 router.get('/birth-records', getBirthRecordReport);
 router.get('/billing-summary', getBillingSummaryReport);
