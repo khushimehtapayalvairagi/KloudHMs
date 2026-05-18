@@ -845,7 +845,7 @@ exports.bulkUploadStaff = async (req, res) => {
 
     const errors = [];
     let successCount = 0;
-
+const designation = (user.designation || "").trim().toLowerCase();
     const allowedDesignations = [
       'Head Nurse',
       
