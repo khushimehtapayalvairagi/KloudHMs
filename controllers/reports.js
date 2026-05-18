@@ -12,6 +12,47 @@ const Bill = require('../models/Bill');
 const Payment = require('../models/Payment');
 const mongoose = require('mongoose');
 
+const Sonography = require("../models/Sonography");
+
+exports.getSonographyReport = async (req, res) => {
+  try {
+    const { startDate, endDate } = req.query;
+
+    let filter = {};
+
+    // ✅ Date Filter
+    if (startDate && endDate) {
+      filter.createdAt = {
+        $gte: new Date(startDate),
+        $lte: new Date(endDate + "T23:59:59")
+      };
+    }
+
+    // ✅ Only completed reports
+    filter.status = "Completed";
+
+    const reports = await Sonography.find(filter)
+      .populate("patientId", "fullName")
+      .populate({
+        path: "doctorId",
+        populate: {
+          path: "userId",
+          select: "name"
+        }
+      })
+      .populate("manualChargeId");
+
+    res.json(reports);
+
+  } catch (err) {
+    console.error("SONOGRAPHY REPORT ERROR:", err);
+    res.status(500).json({
+      message: err.message
+    });
+  }
+};
+
+
 
 exports.getCentralOPDRegister = async (req, res) => {
   try {

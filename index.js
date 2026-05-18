@@ -21,10 +21,10 @@ app.use(cookieParser());
 app.use(
   cors({
     // origin: ["https://uudra.in", "http://localhost:3000"],
-        // origin: ["http://localhost:3000"],
+        origin: ["http://localhost:3001","http://localhost:3000"],
           // origin: ["https://kloudcrm.site", "http://kloudcrm.site", "https://www.kloudcrm.site"],
-          origin: [ "https://kashichem.com",  // ✅ Add this line
-      "http://kashichem.com"],
+      //     origin: [ "https://kashichem.com",  // ✅ Add this line
+      // "http://kashichem.com"],
 
         credentials: true,
   })
@@ -50,6 +50,11 @@ const billingHandler = require('./routes/billing');
 const reports = require('./routes/reports');
 
 
+const sonographyRoutes = require("./routes/sonography");
+
+
+// const visitRoutes = require("./routes/visit");
+
 connectDB(process.env.DATABASE_URL);
 
 
@@ -59,16 +64,18 @@ server.listen(PORT, () => {
 
 
 app.use('/api/auth', AuthHandler);
-app.use('/api/lab',restrictToLoggedInUserOnly,restrictTo(['ADMIN', 'STAFF']),restrictToDesignation(['Pathologist']), labRoutes);
+app.use('/api/lab', labRoutes);
+
+app.use("/api/sonography", sonographyRoutes);
+
+// app.use('/api/visits', visitRoutes);
 
 app.use('/api/billing', restrictToLoggedInUserOnly, restrictTo(['ADMIN', 'RECEPTIONIST', 'STAFF']), billingHandler);
 app.use('/api/admin', restrictToLoggedInUserOnly, restrictTo(['ADMIN',"STAFF"]), bulkUpload);
 app.use('/api/admin',restrictToLoggedInUserOnly,restrictTo(['ADMIN']),AdminHandler);
-app.use('/api/receptionist',restrictToLoggedInUserOnly, restrictTo(['ADMIN', 'STAFF']),restrictToDesignation(['Receptionist','Metron','Pharmacists']),ReceptionistHandler);
+app.use('/api/receptionist',restrictToLoggedInUserOnly, restrictTo(['ADMIN', 'STAFF']),restrictToDesignation(['Receptionist',"Head Nurse","Lab Technician" ,  "Sonography Assist" ]),ReceptionistHandler);
 app.use('/api/doctor', restrictToLoggedInUserOnly,restrictTo(['ADMIN', 'DOCTOR']),doctorHandler);
-app.use('/api/ipd', restrictToLoggedInUserOnly,restrictTo(['ADMIN', 'DOCTOR', 'STAFF']), restrictToDesignation(['Receptionist', 'Metron']),ipdHandler);
-app.use('/api/procedures',restrictToLoggedInUserOnly, restrictTo(['ADMIN', 'DOCTOR', 'STAFF']), restrictToDesignation(['Receptionist', 'Metron']),procedure);
-app.use('/api/inventory',restrictToLoggedInUserOnly,restrictTo(['ADMIN', 'STAFF']),restrictToDesignation(['Pharmacists']),inventoryManager);
+app.use('/api/ipd', restrictToLoggedInUserOnly,restrictTo(['ADMIN', 'DOCTOR', 'STAFF']), restrictToDesignation(['Receptionist', 'Head Nurse']),ipdHandler);
+app.use('/api/procedures',restrictToLoggedInUserOnly, restrictTo(['ADMIN', 'DOCTOR', 'STAFF']), restrictToDesignation(['Receptionist', 'Head Nurse']),procedure);
+app.use('/api/inventory',restrictToLoggedInUserOnly,restrictTo(['ADMIN', 'STAFF']),restrictToDesignation(['Inventory Manager']),inventoryManager);
 app.use('/api/reports',restrictToLoggedInUserOnly, restrictTo(['ADMIN']),reports);
-
-
