@@ -1102,13 +1102,15 @@ exports.getCentralOPDRegister = async (req, res) => {
 const LabTest = require("../models/LabTest");
 const LabPayment = require("../models/LabPayment");
 
+
+
 exports.getMonthlyLabReport = async (req, res) => {
   try {
     const { startDate, endDate } = req.query;
 
     const match = {};
 
-    // Date filter
+    // ✅ DATE FILTER
     if (startDate || endDate) {
       match.date = {};
 
@@ -1121,22 +1123,37 @@ exports.getMonthlyLabReport = async (req, res) => {
       }
     }
 
-    // Completed reports only
+    // ✅ ONLY COMPLETED TESTS
     match.status = "Completed";
 
-    const reports = await LabTest.find(match)
+    // ✅ FETCH LAB TESTS
+    const reportsData = await LabTest.find(match)
       .populate("patientId", "fullName patientId")
-      
       .populate({
         path: "labTechnician",
         populate: {
           path: "userId",
-          select: "name"
-        }
+          select: "name",
+        },
       })
       .sort({ date: -1 });
 
-    // Payment Summary
+    // ✅ ATTACH PAYMENT MANUALLY
+    const reports = await Promise.all(
+      reportsData.map(async (test) => {
+
+        const payment = await LabPayment.findOne({
+          testId: test._id,
+        });
+
+        return {
+          ...test.toObject(),
+          payment: payment || null,
+        };
+      })
+    );
+
+    // ✅ PAYMENT SUMMARY
     const payments = await LabPayment.aggregate([
       {
         $match: {
@@ -1147,32 +1164,34 @@ exports.getMonthlyLabReport = async (req, res) => {
 
             $lte: endDate
               ? new Date(endDate + "T23:59:59")
-              : new Date()
-          }
-        }
+              : new Date(),
+          },
+        },
       },
       {
         $group: {
           _id: "$status",
           totalAmount: { $sum: "$amount" },
-          count: { $sum: 1 }
-        }
-      }
+          count: { $sum: 1 },
+        },
+      },
     ]);
 
+    // ✅ TOTAL TESTS
     const totalTests = reports.length;
 
+    // ✅ RESPONSE
     res.status(200).json({
       totalTests,
       reports,
-      payments
+      payments,
     });
 
   } catch (error) {
     console.error("Monthly Lab Report Error:", error);
 
     res.status(500).json({
-      message: "Error generating monthly lab report"
+      message: "Error generating monthly lab report",
     });
   }
 };
