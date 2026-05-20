@@ -33,8 +33,7 @@ const { getCentralOPDRegister,getDepartmentWiseOPDRegister,getNewVsOldOPDPatient
 
 router.get(
   "/monthly-lab-report",
-  authMiddleware,
-  reportController.getMonthlyLabReport
+  getMonthlyLabReport
 );
 router.get('/opd-register', getCentralOPDRegister);
 router.get('/opd-register/department-wise', getDepartmentWiseOPDRegister);
@@ -59,6 +58,7 @@ router.get('/sonography-report', getSonographyReport);
 
 // router.get('/ot-fumigation-report', getOTFumigationReport);
 router.get('/birth-records', getBirthRecordReport);
+
 router.get('/billing-summary', getBillingSummaryReport);
 router.get('/payment-reconciliation', getPaymentReconciliationReport);
 
