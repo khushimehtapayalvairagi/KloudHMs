@@ -1126,7 +1126,7 @@ exports.getMonthlyLabReport = async (req, res) => {
 
     const reports = await LabTest.find(match)
       .populate("patientId", "fullName patientId")
-       .populate("payment")
+      
       .populate({
         path: "labTechnician",
         populate: {
