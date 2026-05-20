@@ -1015,8 +1015,6 @@ const LabourRoomDetail = require('../models/LabourRoomDetail');
 const Bill = require('../models/Bill');
 const Payment = require('../models/Payment');
 const mongoose = require('mongoose');
-const LabTest = require("../models/LabTest");
-const LabPayment = require("../models/LabPayment");
 
 
 
