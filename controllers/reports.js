@@ -1015,60 +1015,11 @@ const LabourRoomDetail = require('../models/LabourRoomDetail');
 const Bill = require('../models/Bill');
 const Payment = require('../models/Payment');
 const mongoose = require('mongoose');
+const LabTest = require("../models/LabTest");
+const LabPayment = require("../models/LabPayment");
 
 
 
-
-// const Sonography = require('../models/Sonography');
-
-// exports.getSonographyReport = async (req, res) => {
-//   try {
-//     const { startDate, endDate, departmentId } = req.query;
-
-//     let filter = {};
-
-//     // Date filter
-//     if (startDate && endDate) {
-//       filter.createdAt = {
-//         $gte: new Date(startDate),
-//         $lte: new Date(endDate + 'T23:59:59'),
-//       };
-//     }
-
-//     const reports = await Sonography.find(filter)
-//       .populate('patientId', 'fullName')
-//       .populate({
-//         path: 'doctorId',
-//         populate: {
-//           path: 'userId',
-//           select: 'name',
-//         },
-//       });
-
-//     let filteredReports = reports;
-
-//     // Department filter
-//     if (departmentId) {
-//       filteredReports = reports.filter(
-//         (r) =>
-//           r.doctorId?.department?.toString() === departmentId
-//       );
-//     }
-
-//     res.status(200).json({
-//       success: true,
-//       reports: filteredReports,
-//     });
-//   } catch (error) {
-//     console.log('Sonography Report Error:', error);
-//     res.status(500).json({
-//       success: false,
-//       message: 'Failed to fetch sonography report',
-//     });
-//   }
-// };
-
-// const { getSonographyReport } = require('../controllers/reportController');
 
 exports.getCentralOPDRegister = async (req, res) => {
   try {
@@ -1150,67 +1101,85 @@ exports.getCentralOPDRegister = async (req, res) => {
   }
 };
 
+const LabTest = require("../models/LabTest");
+const LabPayment = require("../models/LabPayment");
+
+exports.getMonthlyLabReport = async (req, res) => {
+  try {
+    const { startDate, endDate } = req.query;
+
+    const match = {};
+
+    // Date filter
+    if (startDate || endDate) {
+      match.date = {};
+
+      if (startDate) {
+        match.date.$gte = new Date(startDate);
+      }
+
+      if (endDate) {
+        match.date.$lte = new Date(endDate + "T23:59:59");
+      }
+    }
+
+    // Completed reports only
+    match.status = "Completed";
+
+    const reports = await LabTest.find(match)
+      .populate("patientId", "fullName patientId")
+      .populate({
+        path: "labTechnician",
+        populate: {
+          path: "userId",
+          select: "name"
+        }
+      })
+      .sort({ date: -1 });
+
+    // Payment Summary
+    const payments = await LabPayment.aggregate([
+      {
+        $match: {
+          paymentDate: {
+            $gte: startDate
+              ? new Date(startDate)
+              : new Date("2000-01-01"),
+
+            $lte: endDate
+              ? new Date(endDate + "T23:59:59")
+              : new Date()
+          }
+        }
+      },
+      {
+        $group: {
+          _id: "$status",
+          totalAmount: { $sum: "$amount" },
+          count: { $sum: 1 }
+        }
+      }
+    ]);
+
+    const totalTests = reports.length;
+
+    res.status(200).json({
+      totalTests,
+      reports,
+      payments
+    });
+
+  } catch (error) {
+    console.error("Monthly Lab Report Error:", error);
+
+    res.status(500).json({
+      message: "Error generating monthly lab report"
+    });
+  }
+};
 
 
 
-// exports.getDepartmentWiseOPDRegister = async (req, res) => {
-//   try {
-//     const { startDate, endDate, departmentId } = req.query;
-
-//     const dateFilter = {};
-//     if (startDate && endDate) {
-//       dateFilter.consultationDateTime = {
-//         $gte: new Date(startDate),
-//         $lte: new Date(endDate),
-//       };
-//     }
-
-  
-//     let doctorQuery = {};
-//     if (departmentId) {
-//       doctorQuery.department = departmentId;
-//     }
-//     const doctors = await Doctor.find(doctorQuery).select('_id department').populate('department');
-//     const doctorMap = {};
-//     const doctorIds = doctors.map(doc => {
-//       doctorMap[doc._id.toString()] = doc.department;
-//       return doc._id;
-//     });
-
-//     const consultations = await OPDConsultation.find({
-//       ...dateFilter,
-//       doctorId: { $in: doctorIds }
-//     })
-//       .populate({
-//         path: 'patientId',
-//         select: 'fullName age gender patientId'
-//       })
-//       .populate({
-//         path: 'doctorId',
-//         populate: [
-//           { path: 'userId', select: 'name email' },
-//           { path: 'department', select: 'name' },
-//           { path: 'specialty', select: 'name' }
-//         ]
-//       })
-//       .sort({ consultationDateTime: -1 });
-
- 
-//     const departmentGroups = {};
-//     consultations.forEach(c => {
-//       const deptName = c.doctorId?.department?.name || 'Unknown';
-//       if (!departmentGroups[deptName]) {
-//         departmentGroups[deptName] = [];
-//       }
-//       departmentGroups[deptName].push(c);
-//     });
-
-//     res.status(200).json({ departmentWiseRegister: departmentGroups });
-//   } catch (error) {
-//     console.error('Department-wise OPD Report Error:', error);
-//     res.status(500).json({ message: 'Server error while generating department-wise OPD register.' });
-//   }
-// };
 
 exports.getDepartmentWiseOPDRegister = async (req, res) => {
   try {
@@ -1464,66 +1433,7 @@ exports.getCentralIPDRegister = async (req, res) => {
 
 
 
-// exports.getDepartmentWiseIPDRegister = async (req, res) => {
-//   try {
-//   const { startDate, endDate, departmentId } = req.query;
 
-//     const match = {};
-//     if (startDate || endDate) {
-//       match.admissionDate = {};
-//       if (startDate) match.admissionDate.$gte = new Date(startDate);
-//       if (endDate) match.admissionDate.$lte = new Date(endDate);
-//     }
-
-//     const admissions = await IPDAdmission.find(match)
-//       .populate('patientId', 'fullName patientId')
-//       .populate({
-//         path: 'admittingDoctorId',
-//         populate: [
-//           { path: 'userId', select: 'name' },
-//           { path: 'department', select: 'name' }
-//         ]
-//       });
-
-//     const deptMap = {};
-
-//     for (const ad of admissions) {
-//       const dept = ad.admittingDoctorId?.department;
-//       const deptId = dept?._id?.toString();
-//       const deptName = dept?.name || 'Unknown';
-
-//       if (!deptMap[deptId]) {
-//         deptMap[deptId] = {
-//           department: deptName,
-//           departmentId: deptId,
-//           totalAdmissions: 0,
-//           admissions: []
-//         };
-//       }
-
-//       deptMap[deptId].totalAdmissions += 1;
-
-//       deptMap[deptId].admissions.push({
-//         _id: ad._id,
-//         admissionDate: ad.admissionDate,
-//         status: ad.status,
-//         bedNumber: ad.bedNumber,
-//         patient: ad.patientId,
-//         doctor: ad.admittingDoctorId
-//           ? {
-//               _id: ad.admittingDoctorId._id,
-//               name: ad.admittingDoctorId.userId?.name
-//             }
-//           : null
-//       });
-//     }
-
-//     res.status(200).json(Object.values(deptMap));
-//   } catch (error) {
-//     console.error('Department-wise IPD Register Error:', error);
-//     res.status(500).json({ message: 'Server error generating department-wise IPD register.' });
-//   }
-// };
 exports.getDepartmentWiseIPDRegister = async (req, res) => {
   try {
     const { startDate, endDate, specialtyId } = req.query;
@@ -2011,157 +1921,7 @@ exports.getPaymentReconciliationReport = async (req, res) => {
 
 
 
-// exports.getPaymentReconciliationReport = async (req, res) => {
-//   try {
-//     const { startDate, endDate } = req.query;
-
-//     const match = {};
-//     if (startDate || endDate) {
-//       match.payment_date = {};
-//       if (startDate) match.payment_date.$gte = new Date(startDate);
-//       if (endDate) match.payment_date.$lte = new Date(endDate);
-//     }
-
-//     const payments = await Payment.find(match)
-//       .populate('received_by_user_id_ref', 'name role')
-//       .populate('bill_id_ref', 'patient_id_ref total_amount payment_status');
-
-//     const methodBreakdown = {};
-//     const userBreakdown = {};
-//     let totalAmount = 0;
-
-//     for (const p of payments) {
-//       totalAmount += p.amount_paid;
-
-//       if (!methodBreakdown[p.payment_method]) methodBreakdown[p.payment_method] = 0;
-//       methodBreakdown[p.payment_method] += p.amount_paid;
-
-  
-//       const user = p.received_by_user_id_ref?.name || 'Unknown';
-//       if (!userBreakdown[user]) userBreakdown[user] = 0;
-//       userBreakdown[user] += p.amount_paid;
-//     }
-
-//     res.status(200).json({
-//       totalReceived: totalAmount,
-//       methodBreakdown,
-//       userBreakdown,
-//       payments
-//     });
-//   } catch (error) {
-//     console.error('Payment Reconciliation Report Error:', error);
-//     res.status(500).json({ message: 'Failed to generate report.' });
-//   }
-// };
 
 
 
 
-// controllers/reports.js
-// const Visit = require("../models/Visit");
-// const IPDAdmission = require("../models/IPDAdmission");
-// const Doctor = require("../models/Doctor");
-// const Department = require("../models/Department");
-// const ProcedureSchedule = require("../models/ProcedureSchedule");
-
-// exports.getMonthlyOPDIPDReportHandler = async (req, res) => {
-//   try {
-//     let { fromDate, toDate } = req.query;
-
-//     if (!fromDate || !toDate) {
-//       return res.status(400).json({ message: "fromDate and toDate are required" });
-//     }
-
-//     // ✅ Date normalization
-//     fromDate = new Date(fromDate);
-//     fromDate.setHours(0, 0, 0, 0);
-//     toDate = new Date(toDate);
-//     toDate.setHours(23, 59, 59, 999);
-
-//     // Fetch departments
-//     const departments = await Department.find().select("name").lean();
-//     const deptNames = departments.map((d) => d.name);
-
-//     // Fetch OPD visits
-//     const opdVisits = await Visit.find({
-//       visitType: "OPD",
-//       visitDate: { $gte: fromDate, $lte: toDate },
-//     }).populate({
-//       path: "assignedDoctorId",
-//       populate: { path: "department", select: "name" },
-//     });
-
-//     // Fetch IPD admissions
-//     const ipdAdmissions = await IPDAdmission.find({
-//       admissionDate: { $gte: fromDate, $lte: toDate },
-//     }).populate({
-//       path: "admittingDoctorId",
-//       populate: { path: "department", select: "name" },
-//     });
-
-//     // Fetch procedures (Labour + OT)
-//     const procedures = await ProcedureSchedule.find({
-//       scheduledDateTime: { $gte: fromDate, $lte: toDate },
-//     }).populate({
-//       path: "surgeonId",
-//       populate: { path: "department", select: "name" },
-//     });
-
-//     // Initialize counters
-//     const opdCount = {};
-//     const ipdCount = {};
-//     const otCount = {};
-//     const labourCount = {};
-//     deptNames.forEach((d) => {
-//       opdCount[d] = 0;
-//       ipdCount[d] = 0;
-//       otCount[d] = 0;
-//       labourCount[d] = 0;
-//     });
-
-//     // OPD
-//     opdVisits.forEach((v) => {
-//       const deptName = v.assignedDoctorId?.department?.name;
-//       if (deptName && deptNames.includes(deptName)) opdCount[deptName]++;
-//     });
-
-//     // IPD
-//     ipdAdmissions.forEach((a) => {
-//       const deptName = a.admittingDoctorId?.department?.name;
-//       if (deptName && deptNames.includes(deptName)) ipdCount[deptName]++;
-//     });
-
-//     // Procedures
-//     procedures.forEach((p) => {
-//       const deptName = p.surgeonId?.department?.name;
-//       if (!deptName || !deptNames.includes(deptName)) return;
-
-//       if (p.procedureType === "OT") otCount[deptName]++;
-//       else if (p.procedureType === "Labour Room") labourCount[deptName]++;
-//     });
-
-//     const opdTotal = Object.values(opdCount).reduce((a, b) => a + b, 0);
-//     const ipdTotal = Object.values(ipdCount).reduce((a, b) => a + b, 0);
-//     const otTotal = Object.values(otCount).reduce((a, b) => a + b, 0);
-//     const labourTotal = Object.values(labourCount).reduce((a, b) => a + b, 0);
-
-//     const daysCount = Math.ceil((toDate - fromDate) / (1000 * 60 * 60 * 24)) || 1;
-
-//     res.status(200).json({
-//       report: [
-//         {
-//           fromDate: fromDate.toISOString().slice(0, 10),
-//           toDate: toDate.toISOString().slice(0, 10),
-//           opd: { ...opdCount, total: opdTotal, dailyAvg: (opdTotal / daysCount).toFixed(2) },
-//           ipd: { ...ipdCount, total: ipdTotal, dailyAvg: (ipdTotal / daysCount).toFixed(2) },
-//           ot: { ...otCount, total: otTotal },
-//           labour: { ...labourCount, total: labourTotal },
-//         },
-//       ],
-//       departments: deptNames,
-//     });
-//   } catch (err) {
-//     console.error(err);
-//     res.status(500).json({ message: "Server error" });
-//   }
-// };

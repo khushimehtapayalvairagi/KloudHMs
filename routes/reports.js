@@ -25,13 +25,17 @@ const express = require('express');
 const router = express.Router();
 const { getCentralOPDRegister,getDepartmentWiseOPDRegister,getNewVsOldOPDPatients,getDoctorWiseOPDRegister,
     getCentralIPDRegister,getDepartmentWiseIPDRegister,getOTProcedureRegister,getAnesthesiaRegister,getOTFumigationReport,
-    getBirthRecordReport,getBillingSummaryReport, getSonographyReport,getPaymentReconciliationReport
+    getBirthRecordReport,getBillingSummaryReport,getMonthlyLabReport, getSonographyReport,getPaymentReconciliationReport
  } = require('../controllers/reports');
 
 
 // const verifyToken = require("../middleware/verifyToken");
 
-
+router.get(
+  "/monthly-lab-report",
+  authMiddleware,
+  reportController.getMonthlyLabReport
+);
 router.get('/opd-register', getCentralOPDRegister);
 router.get('/opd-register/department-wise', getDepartmentWiseOPDRegister);
 router.get('/opd-register/new-vs-old', getNewVsOldOPDPatients);
